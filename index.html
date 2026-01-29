@@ -405,6 +405,7 @@ document.addEventListener('visibilitychange', function() {
       ledStatus.className = 'status status-unknown';
     } else {
       // Bağlantı kopmuşsa yeniden bağlan
+      location.reload();
       console.log('MQTT bağlantısı kopmuş, yeniden bağlanılıyor...');
       connectMQTT();
     }
@@ -415,4 +416,5 @@ document.addEventListener('visibilitychange', function() {
 </body>
 
 </html>
+
 
