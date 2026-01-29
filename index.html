@@ -394,21 +394,10 @@ window.addEventListener('load', function() {
 });
 document.addEventListener('visibilitychange', function() {
   if (!document.hidden) {
-    // Sayfa tekrar görünür oldu
-    console.log('Sayfa aktif, MQTT durumu kontrol ediliyor...');
-    
-    // MQTT bağlantısı varsa durumu kontrol et
-    if (client && client.connected) {
-      // LED durumunu sıfırla - yeni mesaj gelene kadar bekle
-      const ledStatus = document.getElementById('led-status');
-      ledStatus.textContent = 'Durum: Güncelleniyor...';
-      ledStatus.className = 'status status-unknown';
-    } else {
-      // Bağlantı kopmuşsa yeniden bağlan
+   
+      console.log('refresh page...');
       location.reload();
-      console.log('MQTT bağlantısı kopmuş, yeniden bağlanılıyor...');
-      connectMQTT();
-    }
+      
   }
 });
   
@@ -416,5 +405,6 @@ document.addEventListener('visibilitychange', function() {
 </body>
 
 </html>
+
 
 
