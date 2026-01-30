@@ -225,7 +225,7 @@ function connectMQTT() {
     
     client.subscribe(MQTT_TOPIC_LED, function(err) {if (!err) {console.log('LED konusuna abone olundu');}});
     client.subscribe(MQTT_TOPIC_NTC, function(err) {if (!err) {console.log('NTC konusuna abone olundu');}});
-    client.subscribe(MQTT_TOPIC_STATUS, function(err) {if (!err) {console.log('Status konusuna abone olundu');}});
+    
     
     if (picoOnlineCheckInterval) {clearInterval(picoOnlineCheckInterval);}    // Pico online kontrolü başlat (her 3 saniyede bir kontrol et)
     picoOnlineCheckInterval = setInterval(checkPicoOnline,1000);
@@ -349,6 +349,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 
