@@ -240,7 +240,7 @@ function connectMQTT() {
     } else if (topic === MQTT_TOPIC_NTC) {
       picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
       if(firstTime) firstTime=false;
-      else updatePicoStatus(true);//ilk girişte yazmayacak retain mesaj olduğu içinanka glc aktif yazacak.
+      else updatePicoStatus(true);//ilk girişte yazmayacak retain mesaj olduğu için anka glc aktif yazacak.
       updateNTCTemp(msg);
     } 
   });
@@ -271,6 +271,7 @@ function updatePicoStatus(online) {
     statusEl.textContent = 'ANKA GLC: Online ✅';
     statusEl.className = 'mqtt-status mqtt-connected';
     ledButtons.forEach(btn => {btn.disabled=false;btn.style.opacity = '1';btn.style.cursor = 'pointer';});// Butonları aktif et
+    if(ledStatus.textContent =='Durum: Bilinmiyor') {location.reload();}  //ekranda anka glc aktif ve led durumu bilinmiyorsa refresh at ve led durumunu getir.
   } else {
     statusEl.textContent = 'ANKA GLC: Offline ❌';
     statusEl.className = 'mqtt-status mqtt-disconnected';
@@ -337,6 +338,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 
