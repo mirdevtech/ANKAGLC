@@ -199,15 +199,12 @@ const MQTT_USER = 'ANKAGLC';
 const MQTT_PASS = 'Argemirdev7';
 const MQTT_TOPIC_LED = 'pico/led';
 const MQTT_TOPIC_NTC = 'pico/ntc';
-
+const MQTT_TOPIC_LED_FEEDBACK = 'pico/ledfeedback';
 
 let client = null;
 let picoOnlineCheckInterval = null;
-let lastPicoHeartbeat = 0;
-let picoHeartbeatReceived = false; // İlk heartbeat alındı mı?
-
 let picoHeartbeatCounter=0;
-let firstTime=true;
+let firstTime=true;//ilk giriş mi 
 
 // MQTT bağlantısı
 function connectMQTT() {
@@ -223,11 +220,11 @@ function connectMQTT() {
     console.log('MQTT bağlandı!');
     updateMQTTStatus(true);
     
-    client.subscribe(MQTT_TOPIC_LED, function(err) {if (!err) {console.log('LED konusuna abone olundu');}});
+    //client.subscribe(MQTT_TOPIC_LED, function(err) {if (!err) {console.log('LED konusuna abone olundu');}});
     client.subscribe(MQTT_TOPIC_NTC, function(err) {if (!err) {console.log('NTC konusuna abone olundu');}});
+    client.subscribe(MQTT_TOPIC_LED_FEEDBACK, function(err) {if (!err) {console.log('LED FEEDBACK konusuna abone olundu');}});
     
-    
-    if (picoOnlineCheckInterval) {clearInterval(picoOnlineCheckInterval);}    // Pico online kontrolü başlat (her 3 saniyede bir kontrol et)
+    if (picoOnlineCheckInterval) {clearInterval(picoOnlineCheckInterval);}    // sayfa tekrar yüklendiğinde başka intervaller oluşmasın diye..
     picoOnlineCheckInterval = setInterval(checkPicoOnline,1000);
   });
   
@@ -235,14 +232,14 @@ function connectMQTT() {
     const msg = message.toString();
     console.log('Gelen mesaj:', topic, msg);
     
-    if (topic === MQTT_TOPIC_LED) {
-      updateLEDStatus(msg);
-    } else if (topic === MQTT_TOPIC_NTC) {
+    //if (topic === MQTT_TOPIC_LED) {updateLEDStatus(msg);} 
+     if (topic === MQTT_TOPIC_NTC) {
       picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
       if(firstTime) firstTime=false;
       else updatePicoStatus(true);//ilk girişte yazmayacak retain mesaj olduğu için anka glc aktif yazacak.
       updateNTCTemp(msg);
-    } 
+    }
+    else if (topic === MQTT_TOPIC_LED_FEEDBACK) {updateLEDStatus(msg);}
   });
   
   client.on('error', function(error) {console.error('MQTT hatası:', error);updateMQTTStatus(false);});
@@ -317,17 +314,12 @@ function sendCommand(topic, message) {
   
   
   if (client && client.connected) {
-    // retain: true parametresi eklendi - broker son durumu saklar
     client.publish(topic, message, { retain: true }, function(err) {
-      if (err) {
-        console.error('Gönderim hatası:', err);
-      } else {
-        console.log('Gönderildi (retained):', topic, message);
-      }
+      if (err) {console.error('Gönderim hatası:', err);} 
+      else {console.log('Gönderildi (retained):', topic, message);}
     });
-  } else {
-    alert('MQTT bağlantısı yok!');
-  }
+   } 
+   else {alert('MQTT bağlantısı yok!');}
 }
 
 
@@ -338,6 +330,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 
