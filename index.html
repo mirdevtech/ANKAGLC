@@ -206,6 +206,8 @@ let picoOnlineCheckInterval = null;
 let lastPicoHeartbeat = 0;
 let picoHeartbeatReceived = false; // İlk heartbeat alındı mı?
 
+let picoHeartbeatCounter=0;
+
 // MQTT bağlantısı
 function connectMQTT() {
   console.log('MQTT bağlanılıyor...');
@@ -220,30 +222,12 @@ function connectMQTT() {
     console.log('MQTT bağlandı!');
     updateMQTTStatus(true);
     
-    // Konulara abone ol
-    client.subscribe(MQTT_TOPIC_LED, function(err) {
-      if (!err) {
-        console.log('LED konusuna abone olundu');
-      }
-    });
+    client.subscribe(MQTT_TOPIC_LED, function(err) {if (!err) {console.log('LED konusuna abone olundu');}});
+    client.subscribe(MQTT_TOPIC_NTC, function(err) {if (!err) {console.log('NTC konusuna abone olundu');}});
+    client.subscribe(MQTT_TOPIC_STATUS, function(err) {if (!err) {console.log('Status konusuna abone olundu');}});
     
-    client.subscribe(MQTT_TOPIC_NTC, function(err) {
-      if (!err) {
-        console.log('NTC konusuna abone olundu');
-      }
-    });
-    
-    client.subscribe(MQTT_TOPIC_STATUS, function(err) {
-      if (!err) {
-        console.log('Status konusuna abone olundu');
-      }
-    });
-    
-    // Pico online kontrolü başlat (her 3 saniyede bir kontrol et)
-    if (picoOnlineCheckInterval) {
-      clearInterval(picoOnlineCheckInterval);
-    }
-    picoOnlineCheckInterval = setInterval(checkPicoOnline, 3000);
+    if (picoOnlineCheckInterval) {clearInterval(picoOnlineCheckInterval);}    // Pico online kontrolü başlat (her 3 saniyede bir kontrol et)
+    picoOnlineCheckInterval = setInterval(checkPicoOnline,1000);
   });
   
   client.on('message', function(topic, message) {
@@ -253,27 +237,14 @@ function connectMQTT() {
     if (topic === MQTT_TOPIC_LED) {
       updateLEDStatus(msg);
     } else if (topic === MQTT_TOPIC_NTC) {
+      picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
+      updatePicoStatus(true);//anka glc aktif yazacak.
       updateNTCTemp(msg);
-    } else if (topic === MQTT_TOPIC_STATUS) {
-      if (msg === 'online') {
-        lastPicoHeartbeat = Date.now();
-        picoHeartbeatReceived = true; // İlk heartbeat alındı
-        updatePicoStatus(true);
-      }
-    }
+    } 
   });
   
-  client.on('error', function(error) {
-    console.error('MQTT hatası:', error);
-    updateMQTTStatus(false);
-  });
-  
-  client.on('close', function() {
-    console.log('MQTT bağlantısı kapandı');
-    updateMQTTStatus(false);
-    // 5 saniye sonra yeniden bağlan
-    setTimeout(connectMQTT, 5000);
-  });
+  client.on('error', function(error) {console.error('MQTT hatası:', error);updateMQTTStatus(false);});
+  client.on('close', function() {console.log('MQTT bağlantısı kapandı');updateMQTTStatus(false); setTimeout(connectMQTT, 3000);});
 }
 
 // MQTT durum güncelle
@@ -289,7 +260,7 @@ function updateMQTTStatus(connected) {
 }
 
 // Pico durum güncelle
-function updatePicoStatus(online) {
+function updatePicoStatus(online) {   
   const statusEl = document.getElementById('pico-status');
   const ledButtons = document.querySelectorAll('.relay-card button');
   const ledStatus = document.getElementById('led-status');
@@ -297,44 +268,24 @@ function updatePicoStatus(online) {
   if (online) {
     statusEl.textContent = 'ANKA GLC: Online ✅';
     statusEl.className = 'mqtt-status mqtt-connected';
-    // Butonları aktif et
-    ledButtons.forEach(btn => {
-      btn.disabled = false;
-      btn.style.opacity = '1';
-      btn.style.cursor = 'pointer';
-    });
+    ledButtons.forEach(btn => {btn.disabled=false;btn.style.opacity = '1';btn.style.cursor = 'pointer';});// Butonları aktif et
   } else {
     statusEl.textContent = 'ANKA GLC: Offline ❌';
     statusEl.className = 'mqtt-status mqtt-disconnected';
-    // Butonları devre dışı bırak
-    ledButtons.forEach(btn => {
-      btn.disabled = true;
-      btn.style.opacity = '0.5';
-      btn.style.cursor = 'not-allowed';
-    });
-    // LED durumunu bilinmiyor yap
+    ledButtons.forEach(btn => {btn.disabled=true;btn.style.opacity = '0.5';btn.style.cursor = 'not-allowed';});  // Butonları devre dışı bırak
     ledStatus.textContent = 'Durum: Bilinmiyor';
     ledStatus.className = 'status status-unknown';
   }
 }
+// Pico durum güncelle
 
-// Pico online kontrolü (5 saniyeden eski heartbeat varsa offline say)
+
+// Pico check
 function checkPicoOnline() {
-  // Hiç heartbeat almadıysak, offline say
-  if (!picoHeartbeatReceived) {
-    updatePicoStatus(false);
-    return;
-  }
-  
-  const now = Date.now();
-  const timeSinceLastHeartbeat = (now - lastPicoHeartbeat) / 1000;
-  
-  if (timeSinceLastHeartbeat > 5) {
-    updatePicoStatus(false);
-  } else {
-    updatePicoStatus(true);
-  }
+ picoHeartbeatCounter++;
+  if(picoHeartbeatCounter==3){picoHeartbeatCounter=0;updatePicoStatus(false);} // 3 saniyeden boyunca veri gelmediyse offline
 }
+// Pico check
 
 // LED durumu güncelle
 function updateLEDStatus(status) {
@@ -388,23 +339,15 @@ function sendCommand(topic, message) {
   }
 }
 
-// Sayfa yüklendiğinde MQTT'ye bağlan
-window.addEventListener('load', function() {
-  connectMQTT();
-});
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden) {
-   
-      console.log('refresh page...');
-      location.reload();
-      
-  }
-});
+
+window.addEventListener('load', function() {connectMQTT();});// Sayfa yüklendiğinde MQTT'ye bağlan
+document.addEventListener('visibilitychange', function() {if (!document.hidden) {location.reload();}});
   
 </script>
 </body>
 
 </html>
+
 
 
 
