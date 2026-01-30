@@ -313,19 +313,7 @@ function updateNTCTemp(temp) {
 
 // Komut gönder - RETAINED mesaj ile
 function sendCommand(topic, message) {
-  // Önce Pico'nun online olup olmadığını kontrol et
-  if (!picoHeartbeatReceived) {
-    alert('ANKA GLC bağlantısı bekleniyor...');
-    return;
-  }
   
-  const now = Date.now();
-  const timeSinceLastHeartbeat = (now - lastPicoHeartbeat) / 1000;
-  
-  if (timeSinceLastHeartbeat > 5) {
-    alert('ANKA GLC offline! Lütfen ANKA GLC nin bağlı olduğundan emin olun.');
-    return;
-  }
   
   if (client && client.connected) {
     // retain: true parametresi eklendi - broker son durumu saklar
@@ -349,6 +337,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 
