@@ -207,6 +207,7 @@ let lastPicoHeartbeat = 0;
 let picoHeartbeatReceived = false; // İlk heartbeat alındı mı?
 
 let picoHeartbeatCounter=0;
+let firstTime=true;
 
 // MQTT bağlantısı
 function connectMQTT() {
@@ -238,7 +239,8 @@ function connectMQTT() {
       updateLEDStatus(msg);
     } else if (topic === MQTT_TOPIC_NTC) {
       picoHeartbeatCounter=0;//veri geldiğini anlıyoruz yani pico online!!!
-      updatePicoStatus(true);//anka glc aktif yazacak.
+      if(firstTime) firstTime=false;
+      else updatePicoStatus(true);//ilk girişte yazmayacak retain mesaj olduğu içinanka glc aktif yazacak.
       updateNTCTemp(msg);
     } 
   });
@@ -347,6 +349,7 @@ document.addEventListener('visibilitychange', function() {if (!document.hidden) 
 </body>
 
 </html>
+
 
 
 
